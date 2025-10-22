@@ -9,16 +9,47 @@ import { EmailMessage, EmailFolder, SearchEmailOptions } from '../types/index.js
 import { logger } from '../utils/logger.js';
 import { extractEmailAddress, extractName, generateId } from '../utils/helpers.js';
 
+/**
+ * Truncate email body to a reasonable length for list views
+ * @param body The full email body
+ * @param maxLength Maximum length (default: 300 characters)
+ * @returns Truncated body with ellipsis if needed
+ */
+function truncateBody(body: string, maxLength: number = 300): string {
+  if (!body) return '';
+
+  // Remove excessive whitespace and newlines
+  const cleaned = body.replace(/\s+/g, ' ').trim();
+
+  if (cleaned.length <= maxLength) {
+    return cleaned;
+  }
+
+  // Truncate at the last space before maxLength to avoid cutting words
+  const truncated = cleaned.substring(0, maxLength);
+  const lastSpace = truncated.lastIndexOf(' ');
+
+  if (lastSpace > maxLength * 0.8) {
+    return truncated.substring(0, lastSpace) + '...';
+  }
+
+  return truncated + '...';
+}
+
 export class SimpleIMAPService {
   private client: ImapFlow | null = null;
   private isConnected: boolean = false;
   private emailCache: Map<string, EmailMessage> = new Map();
   private folderCache: Map<string, EmailFolder> = new Map();
+  private connectionConfig: { host: string; port: number; username?: string; password?: string } | null = null;
 
   async connect(host: string = 'localhost', port: number = 1143, username?: string, password?: string): Promise<void> {
     logger.debug('Connecting to IMAP server', 'IMAPService', { host, port });
 
     try {
+      // Store connection config for reconnection
+      this.connectionConfig = { host, port, username, password };
+
       // Check if using localhost (Proton Bridge)
       const isLocalhost = host === 'localhost' || host === '127.0.0.1';
 
@@ -36,6 +67,17 @@ export class SimpleIMAPService {
           rejectUnauthorized: false,
           minVersion: 'TLSv1.2'
         } : undefined
+      });
+
+      // Setup connection event handlers
+      this.client.on('close', () => {
+        logger.warn('IMAP connection closed', 'IMAPService');
+        this.isConnected = false;
+      });
+
+      this.client.on('error', (err) => {
+        logger.error('IMAP connection error', 'IMAPService', err);
+        this.isConnected = false;
       });
 
       await this.client.connect();
@@ -59,6 +101,30 @@ export class SimpleIMAPService {
     }
   }
 
+  /**
+   * Attempt to reconnect to IMAP server if connection was lost
+   */
+  private async reconnect(): Promise<void> {
+    if (!this.connectionConfig) {
+      throw new Error('Cannot reconnect: no connection config stored');
+    }
+
+    logger.info('Attempting to reconnect to IMAP server', 'IMAPService');
+
+    const { host, port, username, password } = this.connectionConfig;
+    await this.connect(host, port, username, password);
+  }
+
+  /**
+   * Ensure connection is active, reconnect if needed
+   */
+  private async ensureConnection(): Promise<void> {
+    if (!this.isConnected || !this.client) {
+      logger.warn('IMAP connection lost, attempting to reconnect', 'IMAPService');
+      await this.reconnect();
+    }
+  }
+
   isActive(): boolean {
     return this.isConnected && this.client !== null;
   }
@@ -66,8 +132,15 @@ export class SimpleIMAPService {
   async getFolders(): Promise<EmailFolder[]> {
     logger.debug('Fetching folders', 'IMAPService');
 
-    if (!this.client || !this.isConnected) {
+    try {
+      await this.ensureConnection();
+    } catch (error) {
       logger.warn('IMAP not connected, returning cached folders', 'IMAPService');
+      return Array.from(this.folderCache.values());
+    }
+
+    if (!this.client) {
+      logger.warn('IMAP client not available, returning cached folders', 'IMAPService');
       return Array.from(this.folderCache.values());
     }
 
@@ -101,8 +174,15 @@ export class SimpleIMAPService {
   async getEmails(folder: string = 'INBOX', limit: number = 50, offset: number = 0): Promise<EmailMessage[]> {
     logger.debug('Fetching emails', 'IMAPService', { folder, limit, offset });
 
-    if (!this.client || !this.isConnected) {
+    try {
+      await this.ensureConnection();
+    } catch (error) {
       logger.warn('IMAP not connected, returning empty array', 'IMAPService');
+      return [];
+    }
+
+    if (!this.client) {
+      logger.warn('IMAP client not available, returning empty array', 'IMAPService');
       return [];
     }
 
@@ -132,13 +212,17 @@ export class SimpleIMAPService {
             if (!message.source) continue;
             const parsed = await simpleParser(message.source);
 
-            const emailMessage: EmailMessage = {
+            const fullBody = parsed.text || parsed.html || '';
+
+            // Store full body in cache for later retrieval
+            const cachedEmail: EmailMessage = {
               id: message.uid.toString(),
               from: parsed.from?.text || '',
               to: parsed.to?.text ? [parsed.to.text] : [],
               cc: parsed.cc?.text ? [parsed.cc.text] : [],
               subject: parsed.subject || '(No Subject)',
-              body: parsed.text || parsed.html || '',
+              body: fullBody, // Full body stored in cache
+              bodyPreview: truncateBody(fullBody),
               isHtml: !!parsed.html,
               date: parsed.date || new Date(),
               folder,
@@ -154,8 +238,23 @@ export class SimpleIMAPService {
               }))
             };
 
-            messages.push(emailMessage);
-            this.emailCache.set(emailMessage.id, emailMessage);
+            this.emailCache.set(cachedEmail.id, cachedEmail);
+
+            // Return truncated body for list view, without attachment content
+            const listEmail: EmailMessage = {
+              ...cachedEmail,
+              body: truncateBody(fullBody),
+              // Remove attachment content from list view to reduce payload size
+              attachments: cachedEmail.attachments?.map(att => ({
+                filename: att.filename,
+                contentType: att.contentType,
+                size: att.size,
+                contentId: att.contentId
+                // content is intentionally omitted
+              }))
+            };
+
+            messages.push(listEmail);
           } catch (parseError) {
             logger.warn('Failed to parse email', 'IMAPService', parseError);
           }
@@ -203,13 +302,15 @@ export class SimpleIMAPService {
             if (!message.source) continue;
             const parsed = await simpleParser(message.source);
 
+            const fullBody = parsed.text || parsed.html || '';
             const emailMessage: EmailMessage = {
               id: message.uid.toString(),
               from: parsed.from?.text || '',
               to: parsed.to?.text ? [parsed.to.text] : [],
               cc: parsed.cc?.text ? [parsed.cc.text] : [],
               subject: parsed.subject || '(No Subject)',
-              body: parsed.text || parsed.html || '',
+              body: fullBody, // Full body for individual email view
+              bodyPreview: truncateBody(fullBody),
               isHtml: !!parsed.html,
               date: parsed.date || new Date(),
               folder: folder.path,
@@ -243,8 +344,15 @@ export class SimpleIMAPService {
   async searchEmails(options: SearchEmailOptions): Promise<EmailMessage[]> {
     logger.debug('Searching emails', 'IMAPService', options);
 
-    if (!this.client || !this.isConnected) {
+    try {
+      await this.ensureConnection();
+    } catch (error) {
       logger.warn('IMAP not connected', 'IMAPService');
+      return [];
+    }
+
+    if (!this.client) {
+      logger.warn('IMAP client not available', 'IMAPService');
       return [];
     }
 
@@ -285,7 +393,19 @@ export class SimpleIMAPService {
         for (const uid of limitedUids) {
           const email = await this.getEmailById(uid.toString());
           if (email) {
-            results.push(email);
+            // Return truncated body for search results (list view), without attachment content
+            results.push({
+              ...email,
+              body: truncateBody(email.body),
+              // Remove attachment content from search results to reduce payload size
+              attachments: email.attachments?.map(att => ({
+                filename: att.filename,
+                contentType: att.contentType,
+                size: att.size,
+                contentId: att.contentId
+                // content is intentionally omitted
+              }))
+            });
           }
         }
 
@@ -414,6 +534,75 @@ export class SimpleIMAPService {
       logger.error('Failed to move email', 'IMAPService', error);
       throw error;
     }
+  }
+
+  async bulkMoveEmails(emailIds: string[], targetFolder: string): Promise<{ success: number; failed: number; errors: string[] }> {
+    logger.debug('Bulk moving emails', 'IMAPService', { count: emailIds.length, targetFolder });
+
+    if (!this.client || !this.isConnected) {
+      logger.warn('IMAP not connected', 'IMAPService');
+      throw new Error('IMAP client not connected');
+    }
+
+    const results = {
+      success: 0,
+      failed: 0,
+      errors: [] as string[]
+    };
+
+    // Group emails by their source folder for efficient bulk operations
+    const emailsByFolder = new Map<string, string[]>();
+
+    // First, fetch all emails to determine their folders
+    for (const emailId of emailIds) {
+      try {
+        const email = await this.getEmailById(emailId);
+        if (!email) {
+          results.failed++;
+          results.errors.push(`Email ${emailId} not found`);
+          continue;
+        }
+
+        if (!emailsByFolder.has(email.folder)) {
+          emailsByFolder.set(email.folder, []);
+        }
+        emailsByFolder.get(email.folder)!.push(emailId);
+      } catch (error: any) {
+        results.failed++;
+        results.errors.push(`Error fetching email ${emailId}: ${error.message}`);
+      }
+    }
+
+    // Now move emails folder by folder
+    for (const [sourceFolder, ids] of emailsByFolder.entries()) {
+      const lock = await this.client.getMailboxLock(sourceFolder);
+
+      try {
+        // Move each email in this folder
+        for (const emailId of ids) {
+          try {
+            await this.client.messageMove(emailId, targetFolder, { uid: true });
+
+            // Update cache
+            if (this.emailCache.has(emailId)) {
+              const cachedEmail = this.emailCache.get(emailId)!;
+              cachedEmail.folder = targetFolder;
+            }
+
+            results.success++;
+          } catch (error: any) {
+            results.failed++;
+            results.errors.push(`Failed to move email ${emailId}: ${error.message}`);
+            logger.warn(`Failed to move email ${emailId}`, 'IMAPService', error);
+          }
+        }
+      } finally {
+        lock.release();
+      }
+    }
+
+    logger.info(`Bulk move completed: ${results.success} succeeded, ${results.failed} failed`, 'IMAPService');
+    return results;
   }
 
   async deleteEmail(emailId: string): Promise<boolean> {

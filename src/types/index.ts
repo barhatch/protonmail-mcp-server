@@ -36,6 +36,7 @@ export interface EmailMessage {
   bcc?: string[];
   subject: string;
   body: string;
+  bodyPreview?: string; // Truncated preview of body (used in list views)
   isHtml: boolean;
   date: Date;
   folder: string;

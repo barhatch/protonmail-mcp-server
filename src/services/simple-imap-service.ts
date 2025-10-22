@@ -69,16 +69,18 @@ export class SimpleIMAPService {
         } : undefined
       });
 
-      // Setup connection event handlers
-      this.client.on('close', () => {
-        logger.warn('IMAP connection closed', 'IMAPService');
-        this.isConnected = false;
-      });
+      // Setup connection event handlers (only if client has event emitter methods)
+      if (typeof this.client.on === 'function') {
+        this.client.on('close', () => {
+          logger.warn('IMAP connection closed', 'IMAPService');
+          this.isConnected = false;
+        });
 
-      this.client.on('error', (err) => {
-        logger.error('IMAP connection error', 'IMAPService', err);
-        this.isConnected = false;
-      });
+        this.client.on('error', (err) => {
+          logger.error('IMAP connection error', 'IMAPService', err);
+          this.isConnected = false;
+        });
+      }
 
       await this.client.connect();
       this.isConnected = true;

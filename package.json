@@ -57,7 +57,7 @@
     "url": "https://github.com/barhatch/protonmail-mcp-server/issues"
   },
   "engines": {
-    "node": ">=18.0.0",
+    "node": ">=20.0.0",
     "npm": ">=9.0.0"
   },
   "os": [
@@ -76,7 +76,7 @@
     "@types/nodemailer": "^6.4.19",
     "@vitest/coverage-v8": "^4.0.0",
     "typescript": "^5.7.2",
-    "vitest": "^3.2.4"
+    "vitest": "^4.0.0"
   },
   "files": [
     "dist/**/*",

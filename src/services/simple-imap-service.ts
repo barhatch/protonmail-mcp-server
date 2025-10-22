@@ -449,6 +449,107 @@ export class SimpleIMAPService {
     }
   }
 
+  /**
+   * Create a new folder
+   */
+  async createFolder(folderName: string): Promise<boolean> {
+    if (!this.isConnected || !this.client) {
+      throw new Error('IMAP client not connected');
+    }
+
+    try {
+      logger.debug(`Creating folder: ${folderName}`, 'IMAPService');
+
+      // Create the mailbox
+      const result = await this.client.mailboxCreate(folderName);
+
+      // Clear folder cache to refresh
+      this.folderCache.clear();
+
+      logger.info(`Folder created: ${folderName}`, 'IMAPService');
+      return true;
+    } catch (error: any) {
+      if (error.responseText?.includes('ALREADYEXISTS')) {
+        logger.warn(`Folder already exists: ${folderName}`, 'IMAPService');
+        throw new Error(`Folder '${folderName}' already exists`);
+      }
+      logger.error('Failed to create folder', 'IMAPService', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Delete a folder (must be empty)
+   */
+  async deleteFolder(folderName: string): Promise<boolean> {
+    if (!this.isConnected || !this.client) {
+      throw new Error('IMAP client not connected');
+    }
+
+    // Prevent deletion of system folders
+    const protectedFolders = ['INBOX', 'Sent', 'Drafts', 'Trash', 'Spam', 'Archive', 'All Mail'];
+    if (protectedFolders.some(f => folderName.toLowerCase() === f.toLowerCase())) {
+      throw new Error(`Cannot delete protected folder: ${folderName}`);
+    }
+
+    try {
+      logger.debug(`Deleting folder: ${folderName}`, 'IMAPService');
+
+      await this.client.mailboxDelete(folderName);
+
+      // Clear folder cache to refresh
+      this.folderCache.clear();
+
+      logger.info(`Folder deleted: ${folderName}`, 'IMAPService');
+      return true;
+    } catch (error: any) {
+      if (error.responseText?.includes('NONEXISTENT')) {
+        throw new Error(`Folder '${folderName}' does not exist`);
+      }
+      if (error.responseText?.includes('HASCHILDREN') || error.responseText?.includes('not empty')) {
+        throw new Error(`Folder '${folderName}' is not empty. Move or delete emails first.`);
+      }
+      logger.error('Failed to delete folder', 'IMAPService', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Rename a folder
+   */
+  async renameFolder(oldName: string, newName: string): Promise<boolean> {
+    if (!this.isConnected || !this.client) {
+      throw new Error('IMAP client not connected');
+    }
+
+    // Prevent renaming of system folders
+    const protectedFolders = ['INBOX', 'Sent', 'Drafts', 'Trash', 'Spam', 'Archive', 'All Mail'];
+    if (protectedFolders.some(f => oldName.toLowerCase() === f.toLowerCase())) {
+      throw new Error(`Cannot rename protected folder: ${oldName}`);
+    }
+
+    try {
+      logger.debug(`Renaming folder: ${oldName} -> ${newName}`, 'IMAPService');
+
+      await this.client.mailboxRename(oldName, newName);
+
+      // Clear folder cache to refresh
+      this.folderCache.clear();
+
+      logger.info(`Folder renamed: ${oldName} -> ${newName}`, 'IMAPService');
+      return true;
+    } catch (error: any) {
+      if (error.responseText?.includes('NONEXISTENT')) {
+        throw new Error(`Folder '${oldName}' does not exist`);
+      }
+      if (error.responseText?.includes('ALREADYEXISTS')) {
+        throw new Error(`Folder '${newName}' already exists`);
+      }
+      logger.error('Failed to rename folder', 'IMAPService', error);
+      throw error;
+    }
+  }
+
   clearCache(): void {
     this.emailCache.clear();
     this.folderCache.clear();

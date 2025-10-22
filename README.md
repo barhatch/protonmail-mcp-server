@@ -8,13 +8,13 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue.svg)](https://www.typescriptlang.org/)
 [![MCP SDK](https://img.shields.io/badge/MCP%20SDK-1.0.4-green.svg)](https://github.com/modelcontextprotocol/sdk)
 
-Model Context Protocol server for ProtonMail with 20+ tools for email management through Proton Bridge.
+Model Context Protocol server for ProtonMail with 23 tools for email management through Proton Bridge.
 
 ## Features
 
 - **Email sending** - Send emails with HTML/text, attachments, CC/BCC, custom headers
 - **Email reading** - Fetch, search, and filter emails via IMAP
-- **Folder management** - List, sync, and organize email folders
+- **Folder management** - Create, delete, rename, list, and sync folders
 - **Email operations** - Mark read/unread, star, move, delete
 - **Analytics** - Email volume trends, contact statistics, response time analysis
 - **System tools** - Connection status, cache management, logging
@@ -80,9 +80,12 @@ Edit Claude Desktop config (`~/Library/Application Support/Claude/claude_desktop
 - `get_email_by_id` - Get specific email
 - `search_emails` - Search with multiple criteria
 
-**Folders**
+**Folder Management**
 - `get_folders` - List folders with stats
 - `sync_folders` - Sync folder structure
+- `create_folder` - Create new folder
+- `delete_folder` - Delete folder (must be empty)
+- `rename_folder` - Rename folder
 
 **Email Actions**
 - `mark_email_read` - Mark read/unread

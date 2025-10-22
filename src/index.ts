@@ -193,6 +193,40 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         description: "🔄 Synchronize folder structure from server",
         inputSchema: { type: "object", properties: {} }
       },
+      {
+        name: "create_folder",
+        description: "📁 Create a new email folder",
+        inputSchema: {
+          type: "object",
+          properties: {
+            folderName: { type: "string", description: "Name of the folder to create" }
+          },
+          required: ["folderName"]
+        }
+      },
+      {
+        name: "delete_folder",
+        description: "🗑️ Delete an email folder (must be empty)",
+        inputSchema: {
+          type: "object",
+          properties: {
+            folderName: { type: "string", description: "Name of the folder to delete" }
+          },
+          required: ["folderName"]
+        }
+      },
+      {
+        name: "rename_folder",
+        description: "✏️ Rename an email folder",
+        inputSchema: {
+          type: "object",
+          properties: {
+            oldName: { type: "string", description: "Current folder name" },
+            newName: { type: "string", description: "New folder name" }
+          },
+          required: ["oldName", "newName"]
+        }
+      },
 
       // ⚡ EMAIL ACTIONS
       {
@@ -444,6 +478,49 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             {
               type: "text",
               text: `✅ Synchronized ${folders.length} folders`
+            }
+          ]
+        };
+      }
+
+      case "create_folder": {
+        const folderName = args.folderName as string;
+        await imapService.createFolder(folderName);
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: `✅ Folder '${folderName}' created successfully`
+            }
+          ]
+        };
+      }
+
+      case "delete_folder": {
+        const folderName = args.folderName as string;
+        await imapService.deleteFolder(folderName);
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: `✅ Folder '${folderName}' deleted successfully`
+            }
+          ]
+        };
+      }
+
+      case "rename_folder": {
+        const oldName = args.oldName as string;
+        const newName = args.newName as string;
+        await imapService.renameFolder(oldName, newName);
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: `✅ Folder '${oldName}' renamed to '${newName}'`
             }
           ]
         };

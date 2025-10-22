@@ -29,6 +29,8 @@ quick-test.js
 parallel-test.js
 *TEST*.json
 *REPORT*.json
+coverage/
+.nyc_output/
 
 # Temporary files
 temp/

@@ -1,0 +1,88 @@
+{
+  "name": "protonmail-mcp-server",
+  "version": "1.0.0",
+  "description": "Professional ProtonMail MCP server with 20+ tools for email management, analytics, and seamless Proton Bridge integration.",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "protonmail-mcp-server": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "build:clean": "npm run clean && npm run build",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js",
+    "test": "node test.js",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm run build:clean && npm run lint",
+    "lint": "tsc --noEmit",
+    "lint:fix": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "protonmail",
+    "proton",
+    "mcp",
+    "model-context-protocol",
+    "email",
+    "email-management",
+    "automation",
+    "typescript",
+    "claude",
+    "claude-desktop",
+    "ai",
+    "productivity",
+    "bridge",
+    "proton-bridge",
+    "smtp",
+    "imap",
+    "analytics",
+    "email-analytics",
+    "email-automation"
+  ],
+  "author": {
+    "name": "Tom Miller",
+    "email": "tom@barhatch.co.uk"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/barhatch/protonmail-mcp-server#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/barhatch/protonmail-mcp-server.git"
+  },
+  "bugs": {
+    "url": "https://github.com/barhatch/protonmail-mcp-server/issues"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "imapflow": "^1.0.164",
+    "mailparser": "^3.7.1",
+    "nodemailer": "^6.9.15"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@types/nodemailer": "^6.4.19",
+    "typescript": "^5.7.2"
+  },
+  "files": [
+    "dist/**/*",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md",
+    "package.json"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  }
+}

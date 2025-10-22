@@ -1,0 +1,45 @@
+# Source files (only ship dist/)
+src/
+tsconfig.json
+
+# Development files
+.github/
+.claude/
+.vscode/
+.idea/
+
+# Test files
+test/
+*.test.ts
+*.test.js
+
+# Documentation (keep README)
+CONTRIBUTING.md
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# CI/CD
+.travis.yml
+.circleci/
+.github/workflows/
+
+# Misc
+*.swp
+*.swo
+*~

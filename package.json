@@ -69,11 +69,11 @@
     "@modelcontextprotocol/sdk": "^1.0.4",
     "imapflow": "^1.0.164",
     "mailparser": "^3.7.1",
-    "nodemailer": "^6.9.15"
+    "nodemailer": "^7.0.10"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
-    "@types/nodemailer": "^6.4.19",
+    "@types/nodemailer": "^7.0.2",
     "@vitest/coverage-v8": "^4.0.0",
     "typescript": "^5.7.2",
     "vitest": "^4.0.0"

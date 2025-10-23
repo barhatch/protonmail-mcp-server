@@ -640,6 +640,72 @@ export class SimpleIMAPService {
     }
   }
 
+  async bulkDeleteEmails(emailIds: string[]): Promise<{ success: number; failed: number; errors: string[] }> {
+    logger.debug('Bulk deleting emails', 'IMAPService', { count: emailIds.length });
+
+    if (!this.client || !this.isConnected) {
+      logger.warn('IMAP not connected', 'IMAPService');
+      throw new Error('IMAP client not connected');
+    }
+
+    const results = {
+      success: 0,
+      failed: 0,
+      errors: [] as string[]
+    };
+
+    // Group emails by their folder for efficient bulk operations
+    const emailsByFolder = new Map<string, string[]>();
+
+    // First, fetch all emails to determine their folders
+    for (const emailId of emailIds) {
+      try {
+        const email = await this.getEmailById(emailId);
+        if (!email) {
+          results.failed++;
+          results.errors.push(`Email ${emailId} not found`);
+          continue;
+        }
+
+        if (!emailsByFolder.has(email.folder)) {
+          emailsByFolder.set(email.folder, []);
+        }
+        emailsByFolder.get(email.folder)!.push(emailId);
+      } catch (error: any) {
+        results.failed++;
+        results.errors.push(`Error fetching email ${emailId}: ${error.message}`);
+      }
+    }
+
+    // Now delete emails folder by folder
+    for (const [folder, ids] of emailsByFolder.entries()) {
+      const lock = await this.client.getMailboxLock(folder);
+
+      try {
+        // Delete each email in this folder
+        for (const emailId of ids) {
+          try {
+            await this.client.messageDelete(emailId, { uid: true });
+
+            // Remove from cache
+            this.emailCache.delete(emailId);
+
+            results.success++;
+          } catch (error: any) {
+            results.failed++;
+            results.errors.push(`Failed to delete email ${emailId}: ${error.message}`);
+            logger.warn(`Failed to delete email ${emailId}`, 'IMAPService', error);
+          }
+        }
+      } finally {
+        lock.release();
+      }
+    }
+
+    logger.info(`Bulk delete completed: ${results.success} succeeded, ${results.failed} failed`, 'IMAPService');
+    return results;
+  }
+
   /**
    * Create a new folder
    */

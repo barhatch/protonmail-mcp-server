@@ -388,6 +388,21 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ["emailId"],
         },
       },
+      {
+        name: "bulk_delete_emails",
+        description: "🗑️ Delete multiple emails at once (efficient for batch deletion)",
+        inputSchema: {
+          type: "object",
+          properties: {
+            emailIds: {
+              type: "array",
+              description: "Array of email IDs to delete",
+              items: { type: "string" }
+            },
+          },
+          required: ["emailIds"],
+        },
+      },
 
       // 📊 ANALYTICS & STATISTICS TOOLS
       {
@@ -796,6 +811,26 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
               text: success
                 ? "✅ Email deleted successfully"
                 : "❌ Failed to delete email",
+            },
+          ],
+        };
+      }
+
+      case "bulk_delete_emails": {
+        const results = await imapService.bulkDeleteEmails(
+          args.emailIds as string[]
+        );
+
+        const summary = `✅ Bulk delete completed: ${results.success} succeeded, ${results.failed} failed`;
+        const details = results.errors.length > 0
+          ? `\n\nErrors:\n${results.errors.slice(0, 10).join('\n')}${results.errors.length > 10 ? `\n... and ${results.errors.length - 10} more` : ''}`
+          : '';
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: summary + details,
             },
           ],
         };

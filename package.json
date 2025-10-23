@@ -72,7 +72,7 @@
     "nodemailer": "^6.9.15"
   },
   "devDependencies": {
-    "@types/node": "^22.10.2",
+    "@types/node": "^24.9.1",
     "@types/nodemailer": "^6.4.19",
     "@vitest/coverage-v8": "^4.0.0",
     "typescript": "^5.7.2",

@@ -2,19 +2,23 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { SimpleIMAPService } from './simple-imap-service.js';
 
 // Mock ImapFlow
-vi.mock('imapflow', () => ({
-  ImapFlow: vi.fn().mockImplementation(() => ({
-    connect: vi.fn().mockResolvedValue(undefined),
-    logout: vi.fn().mockResolvedValue(undefined),
-    mailboxCreate: vi.fn().mockResolvedValue(undefined),
-    mailboxDelete: vi.fn().mockResolvedValue(undefined),
-    mailboxRename: vi.fn().mockResolvedValue(undefined),
-    list: vi.fn().mockResolvedValue([
-      { path: 'INBOX', delimiter: '/', flags: new Set() },
-      { path: 'Sent', delimiter: '/', flags: new Set() },
-    ]),
-  })),
-}));
+vi.mock('imapflow', () => {
+  const ImapFlow = vi.fn(function() {
+    return {
+      connect: vi.fn().mockResolvedValue(undefined),
+      logout: vi.fn().mockResolvedValue(undefined),
+      mailboxCreate: vi.fn().mockResolvedValue(undefined),
+      mailboxDelete: vi.fn().mockResolvedValue(undefined),
+      mailboxRename: vi.fn().mockResolvedValue(undefined),
+      list: vi.fn().mockResolvedValue([
+        { path: 'INBOX', delimiter: '/', flags: new Set() },
+        { path: 'Sent', delimiter: '/', flags: new Set() },
+      ]),
+    };
+  });
+
+  return { ImapFlow };
+});
 
 // Mock mailparser
 vi.mock('mailparser', () => ({

@@ -1,5 +1,5 @@
 /**
- * Helper utilities for Sirency ProtonMail MCP
+ * Helper utilities for ProtonMail MCP Server
  */
 
 /**
@@ -14,14 +14,14 @@ export function isValidEmail(email: string): boolean {
  * Parse comma-separated email addresses
  */
 export function parseEmails(emailString: string): string[] {
-  if (!emailString || emailString.trim() === '') {
+  if (!emailString || emailString.trim() === "") {
     return [];
   }
 
   return emailString
-    .split(',')
-    .map(email => email.trim())
-    .filter(email => email.length > 0 && isValidEmail(email));
+    .split(",")
+    .map((email) => email.trim())
+    .filter((email) => email.length > 0 && isValidEmail(email));
 }
 
 /**
@@ -42,13 +42,13 @@ export function parseDate(dateString: string): Date {
  * Format bytes to human-readable size
  */
 export function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 Bytes';
+  if (bytes === 0) return "0 Bytes";
 
   const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+  const sizes = ["Bytes", "KB", "MB", "GB", "TB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
 
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
 }
 
 /**
@@ -62,12 +62,12 @@ export function bytesToMB(bytes: number): number {
  * Sanitize string for safe logging
  */
 export function sanitizeForLog(str: string, maxLength: number = 100): string {
-  if (!str) return '';
+  if (!str) return "";
 
-  let sanitized = str.replace(/[\r\n\t]/g, ' ').trim();
+  let sanitized = str.replace(/[\r\n\t]/g, " ").trim();
 
   if (sanitized.length > maxLength) {
-    sanitized = sanitized.substring(0, maxLength) + '...';
+    sanitized = sanitized.substring(0, maxLength) + "...";
   }
 
   return sanitized;
@@ -93,7 +93,7 @@ export function extractName(emailString: string): string | undefined {
  * Sleep/delay function
  */
 export function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
@@ -132,5 +132,5 @@ export function generateId(): string {
  */
 export function truncate(text: string, maxLength: number): string {
   if (text.length <= maxLength) return text;
-  return text.substring(0, maxLength - 3) + '...';
+  return text.substring(0, maxLength - 3) + "...";
 }

@@ -1,8 +1,8 @@
 /**
- * Logging utility for Sirency ProtonMail MCP
+ * Logging utility for ProtonMail MCP Server
  */
 
-import { LogEntry } from '../types/index.js';
+import { LogEntry } from "../types/index.js";
 
 export class Logger {
   private debugMode: boolean = false;
@@ -13,35 +13,40 @@ export class Logger {
     this.debugMode = enabled;
   }
 
-  debug(message: string, context: string = 'System', data?: any): void {
+  debug(message: string, context: string = "System", data?: any): void {
     if (this.debugMode) {
-      this.log('debug', message, context, data);
-      console.error(`[DEBUG] [${context}] ${message}`, data || '');
+      this.log("debug", message, context, data);
+      console.error(`[DEBUG] [${context}] ${message}`, data || "");
     }
   }
 
-  info(message: string, context: string = 'System', data?: any): void {
-    this.log('info', message, context, data);
-    console.error(`[INFO] [${context}] ${message}`, data || '');
+  info(message: string, context: string = "System", data?: any): void {
+    this.log("info", message, context, data);
+    console.error(`[INFO] [${context}] ${message}`, data || "");
   }
 
-  warn(message: string, context: string = 'System', data?: any): void {
-    this.log('warn', message, context, data);
-    console.error(`[WARN] [${context}] ${message}`, data || '');
+  warn(message: string, context: string = "System", data?: any): void {
+    this.log("warn", message, context, data);
+    console.error(`[WARN] [${context}] ${message}`, data || "");
   }
 
-  error(message: string, context: string = 'System', error?: any): void {
-    this.log('error', message, context, error);
-    console.error(`[ERROR] [${context}] ${message}`, error || '');
+  error(message: string, context: string = "System", error?: any): void {
+    this.log("error", message, context, error);
+    console.error(`[ERROR] [${context}] ${message}`, error || "");
   }
 
-  private log(level: 'debug' | 'info' | 'warn' | 'error', message: string, context: string, data?: any): void {
+  private log(
+    level: "debug" | "info" | "warn" | "error",
+    message: string,
+    context: string,
+    data?: any
+  ): void {
     const entry: LogEntry = {
       timestamp: new Date(),
       level,
       context,
       message,
-      data
+      data,
     };
 
     this.logs.push(entry);
@@ -52,11 +57,14 @@ export class Logger {
     }
   }
 
-  getLogs(level?: 'debug' | 'info' | 'warn' | 'error', limit: number = 100): LogEntry[] {
+  getLogs(
+    level?: "debug" | "info" | "warn" | "error",
+    limit: number = 100
+  ): LogEntry[] {
     let filteredLogs = this.logs;
 
     if (level) {
-      filteredLogs = filteredLogs.filter(log => log.level === level);
+      filteredLogs = filteredLogs.filter((log) => log.level === level);
     }
 
     return filteredLogs.slice(-limit);

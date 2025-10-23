@@ -1,5 +1,5 @@
 /**
- * Type definitions for Sirency ProtonMail MCP
+ * Type definitions for ProtonMail MCP Server
  */
 
 export interface SMTPConfig {
@@ -132,7 +132,7 @@ export interface SendEmailOptions {
   subject: string;
   body: string;
   isHtml?: boolean;
-  priority?: 'high' | 'normal' | 'low';
+  priority?: "high" | "normal" | "low";
   replyTo?: string;
   attachments?: EmailAttachment[];
   inReplyTo?: string;
@@ -173,7 +173,7 @@ export interface ConnectionStatus {
 
 export interface LogEntry {
   timestamp: Date;
-  level: 'debug' | 'info' | 'warn' | 'error';
+  level: "debug" | "info" | "warn" | "error";
   context: string;
   message: string;
   data?: any;

@@ -1,22 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * 🌟 The Sirency Collective - Ultimate Proton Mail MCP Server
- *
- * The most comprehensive Proton Mail MCP server ever created.
- * Built by The Sirency Collective for legendary email management.
- *
- * Features:
- * ✅ Advanced email sending (SMTP) with templates & scheduling
- * ✅ Complete email reading (IMAP) via Proton Bridge
- * ✅ Comprehensive email statistics & analytics
- * ✅ Folder and label management
- * ✅ Contact management with interaction tracking
- * ✅ Email search with advanced filters
- * ✅ Attachment handling
- * ✅ Email threading and conversation management
- * ✅ Real-time synchronization
- * ✅ Performance monitoring and logging
+ * 🌟 Proton Mail MCP Server
  */
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
@@ -32,8 +17,7 @@ import { ProtonMailConfig } from "./types/index.js";
 import { SMTPService } from "./services/smtp-service.js";
 import { SimpleIMAPService } from "./services/simple-imap-service.js";
 import { AnalyticsService } from "./services/analytics-service.js";
-import { logger, Logger } from "./utils/logger.js";
-import { parseEmails, isValidEmail } from "./utils/helpers.js";
+import { logger } from "./utils/logger.js";
 
 // Environment configuration
 const PROTONMAIL_USERNAME = process.env.PROTONMAIL_USERNAME;
@@ -54,7 +38,7 @@ const DEBUG = process.env.DEBUG === "true";
 // Validate required environment variables
 if (!PROTONMAIL_USERNAME || !PROTONMAIL_PASSWORD) {
   console.error(
-    "❌ [Sirency-ProtonMail] Missing required environment variables: PROTONMAIL_USERNAME and PROTONMAIL_PASSWORD must be set"
+    "❌ [ProtonMail MCP Server] Missing required environment variables: PROTONMAIL_USERNAME and PROTONMAIL_PASSWORD must be set"
   );
   process.exit(1);
 }
@@ -95,8 +79,8 @@ const analyticsService = new AnalyticsService();
  */
 const server = new Server(
   {
-    name: "sirency-protonmail-ultimate-mcp",
-    version: "1.0.0",
+    name: "protonmail-mcp-server",
+    version: "1.0.1",
   },
   {
     capabilities: {
@@ -173,13 +157,15 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       // 📬 EMAIL READING TOOLS
       {
         name: "get_emails",
-        description: "📬 Get emails from a specific folder with pagination (returns truncated body preview, attachment metadata only)",
+        description:
+          "📬 Get emails from a specific folder with pagination (returns truncated body preview, attachment metadata only)",
         inputSchema: {
           type: "object",
           properties: {
             folder: {
               type: "string",
-              description: "Folder path (e.g., 'INBOX', 'Sent', 'Folders/MyFolder'). Default: INBOX",
+              description:
+                "Folder path (e.g., 'INBOX', 'Sent', 'Folders/MyFolder'). Default: INBOX",
               default: "INBOX",
             },
             limit: {
@@ -197,7 +183,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "get_email_by_id",
-        description: "📧 Get a specific email by its ID (returns full email body and attachments)",
+        description:
+          "📧 Get a specific email by its ID (returns full email body and attachments)",
         inputSchema: {
           type: "object",
           properties: {
@@ -208,12 +195,18 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "search_emails",
-        description: "🔍 Search emails with advanced filters (returns truncated body preview, attachment metadata only)",
+        description:
+          "🔍 Search emails with advanced filters (returns truncated body preview, attachment metadata only)",
         inputSchema: {
           type: "object",
           properties: {
             query: { type: "string", description: "Search query" },
-            folder: { type: "string", description: "Folder path to search in (e.g., 'INBOX', 'Folders/MyFolder'). Default: INBOX", default: "INBOX" },
+            folder: {
+              type: "string",
+              description:
+                "Folder path to search in (e.g., 'INBOX', 'Folders/MyFolder'). Default: INBOX",
+              default: "INBOX",
+            },
             from: { type: "string", description: "Filter by sender" },
             to: { type: "string", description: "Filter by recipient" },
             subject: { type: "string", description: "Filter by subject" },
@@ -239,7 +232,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       // 📁 FOLDER MANAGEMENT TOOLS
       {
         name: "get_folders",
-        description: "📁 Get all email folders with statistics. Note: Labels appear as folders with 'Labels/' prefix (e.g., 'Labels/Work')",
+        description:
+          "📁 Get all email folders with statistics. Note: Labels appear as folders with 'Labels/' prefix (e.g., 'Labels/Work')",
         inputSchema: { type: "object", properties: {} },
       },
       {
@@ -249,13 +243,15 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "create_folder",
-        description: "📁 Create a new email folder. Use 'Folders/FolderName' for custom folders or 'Labels/LabelName' for labels",
+        description:
+          "📁 Create a new email folder. Use 'Folders/FolderName' for custom folders or 'Labels/LabelName' for labels",
         inputSchema: {
           type: "object",
           properties: {
             folderName: {
               type: "string",
-              description: "Folder path to create (e.g., 'Folders/MyFolder' or 'Labels/Work')",
+              description:
+                "Folder path to create (e.g., 'Folders/MyFolder' or 'Labels/Work')",
             },
           },
           required: ["folderName"],
@@ -263,13 +259,15 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "delete_folder",
-        description: "🗑️ Delete an email folder or label (must be empty). Works with 'Folders/' or 'Labels/' prefixes",
+        description:
+          "🗑️ Delete an email folder or label (must be empty). Works with 'Folders/' or 'Labels/' prefixes",
         inputSchema: {
           type: "object",
           properties: {
             folderName: {
               type: "string",
-              description: "Folder path to delete (e.g., 'Folders/MyFolder' or 'Labels/Work')",
+              description:
+                "Folder path to delete (e.g., 'Folders/MyFolder' or 'Labels/Work')",
             },
           },
           required: ["folderName"],
@@ -277,12 +275,21 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "rename_folder",
-        description: "✏️ Rename an email folder or label. Works with 'Folders/' or 'Labels/' prefixes",
+        description:
+          "✏️ Rename an email folder or label. Works with 'Folders/' or 'Labels/' prefixes",
         inputSchema: {
           type: "object",
           properties: {
-            oldName: { type: "string", description: "Current folder path (e.g., 'Folders/OldName' or 'Labels/OldLabel')" },
-            newName: { type: "string", description: "New folder path (e.g., 'Folders/NewName' or 'Labels/NewLabel')" },
+            oldName: {
+              type: "string",
+              description:
+                "Current folder path (e.g., 'Folders/OldName' or 'Labels/OldLabel')",
+            },
+            newName: {
+              type: "string",
+              description:
+                "New folder path (e.g., 'Folders/NewName' or 'Labels/NewLabel')",
+            },
           },
           required: ["oldName", "newName"],
         },
@@ -323,56 +330,76 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "move_email",
-        description: "📦 Move email to different folder (use folder path like 'INBOX', 'Trash', or 'Folders/MyFolder')",
+        description:
+          "📦 Move email to different folder (use folder path like 'INBOX', 'Trash', or 'Folders/MyFolder')",
         inputSchema: {
           type: "object",
           properties: {
             emailId: { type: "string", description: "Email ID" },
-            targetFolder: { type: "string", description: "Target folder name (e.g., 'Trash', 'Folders/Archive')" },
+            targetFolder: {
+              type: "string",
+              description:
+                "Target folder name (e.g., 'Trash', 'Folders/Archive')",
+            },
           },
           required: ["emailId", "targetFolder"],
         },
       },
       {
         name: "bulk_move_emails",
-        description: "📦 Move multiple emails to a folder at once (efficient for managing multiple emails)",
+        description:
+          "📦 Move multiple emails to a folder at once (efficient for managing multiple emails)",
         inputSchema: {
           type: "object",
           properties: {
             emailIds: {
               type: "array",
               description: "Array of email IDs to move",
-              items: { type: "string" }
+              items: { type: "string" },
             },
-            targetFolder: { type: "string", description: "Target folder path (e.g., 'Trash', 'Folders/Archive')" },
+            targetFolder: {
+              type: "string",
+              description:
+                "Target folder path (e.g., 'Trash', 'Folders/Archive')",
+            },
           },
           required: ["emailIds", "targetFolder"],
         },
       },
       {
         name: "add_label",
-        description: "🏷️ Add a label to an email. Note: Labels are folders with 'Labels/' prefix. This moves the email to 'Labels/LabelName'. Create the label folder first if it doesn't exist.",
+        description:
+          "🏷️ Add a label to an email. Note: Labels are folders with 'Labels/' prefix. This moves the email to 'Labels/LabelName'. Create the label folder first if it doesn't exist.",
         inputSchema: {
           type: "object",
           properties: {
             emailId: { type: "string", description: "Email ID" },
-            label: { type: "string", description: "Label name without prefix (e.g., 'Work', 'Important'). Will be moved to 'Labels/LabelName' folder." },
+            label: {
+              type: "string",
+              description:
+                "Label name without prefix (e.g., 'Work', 'Important'). Will be moved to 'Labels/LabelName' folder.",
+            },
           },
           required: ["emailId", "label"],
         },
       },
       {
         name: "bulk_add_label",
-        description: "🏷️ Add a label to multiple emails. Note: Labels are folders with 'Labels/' prefix. This moves emails to 'Labels/LabelName'. Create the label folder first if it doesn't exist.",
+        description:
+          "🏷️ Add a label to multiple emails. Note: Labels are folders with 'Labels/' prefix. This moves emails to 'Labels/LabelName'. Create the label folder first if it doesn't exist.",
         inputSchema: {
           type: "object",
           properties: {
             emailIds: {
               type: "array",
               description: "Array of email IDs to label",
-              items: { type: "string" }
+              items: { type: "string" },
             },
-            label: { type: "string", description: "Label name without prefix (e.g., 'Work', 'Important'). Emails will be moved to 'Labels/LabelName' folder." },
+            label: {
+              type: "string",
+              description:
+                "Label name without prefix (e.g., 'Work', 'Important'). Emails will be moved to 'Labels/LabelName' folder.",
+            },
           },
           required: ["emailIds", "label"],
         },
@@ -390,14 +417,15 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "bulk_delete_emails",
-        description: "🗑️ Delete multiple emails at once (efficient for batch deletion)",
+        description:
+          "🗑️ Delete multiple emails at once (efficient for batch deletion)",
         inputSchema: {
           type: "object",
           properties: {
             emailIds: {
               type: "array",
               description: "Array of email IDs to delete",
-              items: { type: "string" }
+              items: { type: "string" },
             },
           },
           required: ["emailIds"],
@@ -458,7 +486,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           properties: {
             folder: {
               type: "string",
-              description: "Folder path to sync (e.g., 'INBOX', 'Folders/MyFolder'). Default: all folders",
+              description:
+                "Folder path to sync (e.g., 'INBOX', 'Folders/MyFolder'). Default: all folders",
             },
             full: {
               type: "boolean",
@@ -742,9 +771,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         );
 
         const summary = `✅ Bulk move completed: ${results.success} succeeded, ${results.failed} failed`;
-        const details = results.errors.length > 0
-          ? `\n\nErrors:\n${results.errors.slice(0, 10).join('\n')}${results.errors.length > 10 ? `\n... and ${results.errors.length - 10} more` : ''}`
-          : '';
+        const details =
+          results.errors.length > 0
+            ? `\n\nErrors:\n${results.errors.slice(0, 10).join("\n")}${
+                results.errors.length > 10
+                  ? `\n... and ${results.errors.length - 10} more`
+                  : ""
+              }`
+            : "";
 
         return {
           content: [
@@ -787,9 +821,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         );
 
         const summary = `✅ Bulk label '${label}' completed: ${results.success} succeeded, ${results.failed} failed`;
-        const details = results.errors.length > 0
-          ? `\n\nErrors:\n${results.errors.slice(0, 10).join('\n')}${results.errors.length > 10 ? `\n... and ${results.errors.length - 10} more` : ''}`
-          : '';
+        const details =
+          results.errors.length > 0
+            ? `\n\nErrors:\n${results.errors.slice(0, 10).join("\n")}${
+                results.errors.length > 10
+                  ? `\n... and ${results.errors.length - 10} more`
+                  : ""
+              }`
+            : "";
 
         return {
           content: [
@@ -822,9 +861,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         );
 
         const summary = `✅ Bulk delete completed: ${results.success} succeeded, ${results.failed} failed`;
-        const details = results.errors.length > 0
-          ? `\n\nErrors:\n${results.errors.slice(0, 10).join('\n')}${results.errors.length > 10 ? `\n... and ${results.errors.length - 10} more` : ''}`
-          : '';
+        const details =
+          results.errors.length > 0
+            ? `\n\nErrors:\n${results.errors.slice(0, 10).join("\n")}${
+                results.errors.length > 10
+                  ? `\n... and ${results.errors.length - 10} more`
+                  : ""
+              }`
+            : "";
 
         return {
           content: [

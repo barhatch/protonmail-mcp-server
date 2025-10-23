@@ -1,6 +1,6 @@
 {
   "name": "protonmail-mcp-server",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Professional ProtonMail MCP server with 23 tools for email management, folder operations, analytics, and seamless Proton Bridge integration.",
   "type": "module",
   "main": "dist/index.js",
